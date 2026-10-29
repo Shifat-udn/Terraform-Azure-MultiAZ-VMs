@@ -1,0 +1,14 @@
+# to see the vm ssh password 
+terraform output -raw vm_password
+
+# cloud-init log 
+sudo tail -n 50 /var/log/cloud-init-output.log
+
+#Run to confirm #cloud-config
+
+sudo cat /var/lib/cloud/instance/user-data.txt
+
+# rerun cloud-init in the vm to see error 
+sudo cloud-init clean --logs
+sudo cloud-init init --local
+sudo cloud-init init

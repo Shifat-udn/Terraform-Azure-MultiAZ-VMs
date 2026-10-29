@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>virtual machine</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            400: '#38bdf8',
+                            500: '#06b6d4',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow: hidden; /* Clean full-screen view with no scrollbars */
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Canvas Overlay Background */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Text Glow Effect */
+        .glow-text {
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex items-center justify-center p-6 selection:bg-sky-500 selection:text-white">
+
+    <!-- Interactive Canvas Background -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Centered Minimal Card (Header + Paragraph Only) -->
+    <main class="relative z-10 w-full max-w-2xl mx-auto pointer-events-auto">
+        <div class="glass-card rounded-3xl p-8 sm:p-12 text-center space-y-6 transition-transform duration-500 hover:scale-[1.01]">
+            
+            <!-- Minimal Icon/Logo Badge -->
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white text-2xl font-bold shadow-lg shadow-sky-500/30">
+                <i class="fa-solid fa-cube"></i>
+            </div>
+
+            <!-- Header -->
+            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
+                __VM_HOSTNAME__ , <br />
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 glow-text">
+                    IP : __VM_IP__
+                </span>
+            </h1>
+
+            <!-- Paragraph -->
+            <p class="text-base sm:text-lg text-slate-300 font-light leading-relaxed max-w-lg mx-auto">
+                This virtual machine is automatically provisioned and managed via Terraform Infrastructure as Code. Any manual configuration changes may be overwritten during subsequent deployment pipelines. Please reference the central git repository for resource tagging, sizing, and security updates.
+            </p>
+
+        </div>
+    </main>
+
+    <!-- Interactive Canvas Script -->
+    <script>
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let config = {
+            particleCount: 90,
+            maxDistance: 150,
+            baseSpeed: 1.2,
+            particleColor: 'rgba(56, 189, 248, ', // Sky blue
+            lineColor: '56, 189, 248'
+        };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 170
+        };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) {
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY;
+            }
+        });
+
+        window.addEventListener('touchend', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // Click to spawn a small burst of particles
+        window.addEventListener('click', (e) => {
+            for (let i = 0; i < 8; i++) {
+                const p = new Particle(e.clientX, e.clientY);
+                p.vx = (Math.random() - 0.5) * 5;
+                p.vy = (Math.random() - 0.5) * 5;
+                particles.push(p);
+            }
+            if (particles.length > config.particleCount + 30) {
+                particles.splice(0, 8);
+            }
+        });
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.radius = Math.random() * 2 + 1;
+                this.vx = (Math.random() - 0.5) * config.baseSpeed;
+                this.vy = (Math.random() - 0.5) * config.baseSpeed;
+                this.baseAlpha = Math.random() * 0.5 + 0.3;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = config.particleColor + this.baseAlpha + ')';
+                ctx.fill();
+            }
+
+            update() {
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < mouse.radius) {
+                        let force = (mouse.radius - dist) / mouse.radius;
+                        let angle = Math.atan2(dy, dx);
+                        let moveX = Math.cos(angle) * force * 3;
+                        let moveY = Math.sin(angle) * force * 3;
+
+                        this.x -= moveX;
+                        this.y -= moveY;
+                    }
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.draw();
+            }
+        }
+
+        let particles = [];
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function connectParticles() {
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a + 1; b < particles.length; b++) {
+                    let dx = particles[a].x - particles[b].x;
+                    let dy = particles[a].y - particles[b].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < config.maxDistance) {
+                        let alpha = 1 - (dist / config.maxDistance);
+                        ctx.strokeStyle = `rgba(${config.lineColor}, ${alpha * 0.35})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = particles[a].x - mouse.x;
+                    let dy = particles[a].y - mouse.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < config.maxDistance + 20) {
+                        let alpha = 1 - (dist / (config.maxDistance + 20));
+                        ctx.strokeStyle = `rgba(${config.lineColor}, ${alpha * 0.75})`;
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+            }
+            connectParticles();
+
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = function() {
+            animate();
+        };
+    </script>
+</body>
+</html>

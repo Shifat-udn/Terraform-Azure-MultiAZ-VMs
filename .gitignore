@@ -1,0 +1,16 @@
+# Ignore local Terraform directories
+.terraform/
+
+# Ignore local state files (which can contain sensitive plain-text data)
+*.tfstate
+*.tfstate.*
+
+# Ignore variables files containing sensitive credentials
+*.tfvars
+*.tfvars.json
+
+# Ignore override files
+override.tf
+override.tf.json
+_override.tf
+_override.tf.json

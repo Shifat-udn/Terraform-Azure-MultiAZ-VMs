@@ -1,0 +1,20 @@
+
+            #cloud-config
+            package_update: true
+            package_upgrade: true
+            packages:
+                - apache2
+
+            write_files:
+                - path: /var/www/html/index.html
+                  owner: root:root
+                  permissions: '0644'
+                  content: |
+                    ${indent(10,file("${path.module}/index.html"))}
+
+            runcmd:
+                - systemctl start apache2
+                - systemctl enable apache2
+                - sed -i "s|__VM_HOSTNAME__|$(hostname)|g" /var/www/html/index.html
+                - sed -i "s|__VM_IP__|$(hostname -I | cut -d' ' -f1)|g" /var/www/html/index.html
+
